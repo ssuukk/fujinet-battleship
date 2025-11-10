@@ -51,6 +51,36 @@ uint16_t quadrant_offset[] = {
 //     }
 // }
 
+void rgbOrComposite() {
+
+    if (!isCoCo3)
+        return; // not a coco3, we can't change palettes anyway.
+
+
+    drawTextAt(8,96,"R-GB or C-OMPOSITE");
+
+    while (1)
+    {
+        switch(cgetc())
+        {
+        case 'R':
+        case 'r':
+            rgb();
+            paletteRGB(1,2,2,2); // White
+            paletteRGB(2,0,0,1); // BLUE
+            paletteRGB(3,2,0,0); // Black
+            return;
+        case 'C':
+        case 'c':
+            cmp();
+            palette(1,63); // White
+            palette(2,11); // BLUE
+            palette(3,22); // red-orange
+            return;
+        }
+    }
+}
+
 void initGraphics()
 {
     // disableInterrupts();
@@ -70,6 +100,7 @@ void initGraphics()
     pmode(3, SCREEN);
     pcls(0);
     screen(1, 0);
+    rgbOrComposite();
 }
 
 bool saveScreenBuffer()
