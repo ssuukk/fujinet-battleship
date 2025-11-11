@@ -81,7 +81,6 @@ void renderLobby()
         if (state.countdownStarted)
         {
             soundTick();
-            pause(30);
         }
         else
         {
@@ -399,7 +398,7 @@ void renderGameboard()
             memcpy(state.shipsLeft[i], clientState.game.players[i].shipsLeft, 5);
         }
 
-               for (i = 0; i < clientState.game.playerCount; i++)
+        for (i = 0; i < clientState.game.playerCount; i++)
         {
             // Draw player name
             drawPlayerName(i, i == 0 && clientState.game.playerStatus != PLAYER_STATUS_VIEWING ? "you" : clientState.game.players[i].name, i == clientState.game.activePlayer);
@@ -466,8 +465,8 @@ bool testShip(uint8_t shipSize, uint8_t pos)
     uint8_t i;
     for (i = 0; i < shipSize; i++)
     {
-        // if crossed boundary, return false
-        if (tempBuffer[pos % 100] || pos > 199 || (i > 0 && pos % 10 == 0))
+        // if existing ship || outside V bounds || crossed H bounds, return false
+        if (tempBuffer[pos % 100] || pos > 199 || (i > 0 && pos < 100 && pos % 10 == 0))
             return false;
 
         pos += (pos >= 100) ? 10 : 1;
@@ -477,6 +476,7 @@ bool testShip(uint8_t shipSize, uint8_t pos)
 
 void processInput()
 {
+    waitvsync();
     readCommonInput();
 
     if (state.waitingOnEndGameContinue)
@@ -490,11 +490,12 @@ void processInput()
     else if (clientState.game.playerStatus != PLAYER_STATUS_VIEWING)
     {
         // Toggle readiness if waiting to start game
-        if (clientState.game.status == STATUS_LOBBY && input.trigger && clientState.lobby.playerStatus != PLAYER_STATUS_READY)
+        if (clientState.game.status == STATUS_LOBBY && input.trigger)
         {
-            clientState.lobby.playerStatus = PLAYER_STATUS_READY; // clientState.lobby.playerStatus ? PLAYER_STATUS_DEFAULT : PLAYER_STATUS_READY;
+            clientState.lobby.playerStatus = clientState.lobby.playerStatus ? PLAYER_STATUS_DEFAULT : PLAYER_STATUS_READY;
             clientState.lobby.players[0].ready = clientState.lobby.playerStatus;
             renderLobby();
+
             if (clientState.lobby.playerStatus)
                 soundHit();
             else

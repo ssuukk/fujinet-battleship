@@ -20,6 +20,9 @@ extern unsigned char charset[];
 #define ROP_YELLOW 0b01010101
 #define BOX_SIDE 0b111100
 
+#define COLOR_MODE_COCO3_RGB 1
+#define COLOR_MODE_COCO3_COMPOSITE 2
+
 #define LEGEND_X 24
 
 extern char lastKey;
@@ -34,72 +37,71 @@ uint16_t quadrant_offset[] = {
     256U * 1 + 17 + 64,
     256U * 12 + 17 + 64};
 
-// interrupt void resetFlagOnVsync(void)
-// {
-//     asm
-//         {
-//         lda     $FF03 // check for 60 Hz interrupt
-//         lbpl    irqISR_end // return if 63.5 us interrupt
-//         lda     $FF02 // reset PIA0, port B interrupt flag
-//         }
+uint16_t legendShipOffset[] = {2, 1, 0, 256U * 5, 256U * 6 + 1};
 
-//     // Do something in C.
-//     *(uint8_t *)0x9FF = 1;
-//     asm
-//     {
-// irqISR_end:
-//     }
-// }
+void updateColors()
+{
+    if (prefs.colorMode == COLOR_MODE_COCO3_RGB)
+    {
+        rgb();
+        paletteRGB(1, 3, 3, 3); // White
+        paletteRGB(2, 0, 0, 2); // Blue
+        paletteRGB(3, 2, 0, 0); // Red
+    }
+    else if (prefs.colorMode == COLOR_MODE_COCO3_COMPOSITE)
+    {
+        cmp();
+        palette(1, 63); // White
+        palette(2, 11); // Blue
+        palette(3, 22); // Red
+    }
+}
 
-void rgbOrComposite() {
+uint8_t cycleNextColor()
+{
+    if (!prefs.colorMode)
+        return 0; // Coco3 is not enabled
 
+    ++prefs.colorMode;
+    if (prefs.colorMode > 2)
+        prefs.colorMode = 1;
+
+    updateColors();
+    return prefs.colorMode;
+}
+
+void rgbOrComposite()
+{
     if (!isCoCo3)
         return; // not a coco3, we can't change palettes anyway.
 
-
-    drawTextAt(8,96,"R-GB or C-OMPOSITE");
-
-    while (1)
+    while (!prefs.colorMode)
     {
-        switch(cgetc())
+        drawTextAltAt(8, 96, "R-GB or c-composite");
+        switch (cgetc())
         {
         case 'R':
         case 'r':
-            rgb();
-            paletteRGB(1,2,2,2); // White
-            paletteRGB(2,0,0,1); // BLUE
-            paletteRGB(3,2,0,0); // Black
-            return;
+            prefs.colorMode = COLOR_MODE_COCO3_RGB;
+            break;
         case 'C':
         case 'c':
-            cmp();
-            palette(1,63); // White
-            palette(2,11); // BLUE
-            palette(3,22); // red-orange
-            return;
+            prefs.colorMode = COLOR_MODE_COCO3_COMPOSITE;
+            break;
         }
     }
+
+    updateColors();
 }
 
 void initGraphics()
 {
-    // disableInterrupts();
-    // setISR(0xFFF8, irqISR);
-    // enableInterrupts();
-
     initCoCoSupport();
-
-    // disableInterrupts();
-    // unsigned char *irqVector = *(unsigned char **)0xFFF8;
-    // *irqVector = 0x7E; // extended JMP extension
-    // *(void **)(irqVector + 1) = (void *)resetFlagOnVsync;
-    // enableInterrupts();
-
-    // if (isCoCo3) {  }
 
     pmode(3, SCREEN);
     pcls(0);
     screen(1, 0);
+
     rgbOrComposite();
 }
 
@@ -194,7 +196,6 @@ void resetScreen()
     pcls(0);
 }
 
-uint16_t legendShipOffset[] = {2, 1, 0, 256U * 5, 256U * 6 + 1};
 void drawLegendShip(uint8_t player, uint8_t index, uint8_t size, uint8_t status)
 {
     uint16_t dest = fieldX + quadrant_offset[player] + legendShipOffset[index];
@@ -335,7 +336,7 @@ void drawShip(uint8_t size, uint8_t pos, bool hide)
 {
     uint8_t x, y, i, j, delta = 0;
     uint8_t *src;
-    // 100 bytes added for speed improvements
+
     if (pos > 99)
     {
         delta = 1; // 1=vertical, 0=horizontal

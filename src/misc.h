@@ -140,6 +140,7 @@ typedef struct
     uint8_t debugFlag; // 0xFF to use localhost instead of server
     bool seenHelp;
     uint8_t disableSound;
+    uint8_t colorMode;
     uint8_t reserved[20]; // Reserve blank space for future
 } PrefsStruct;
 

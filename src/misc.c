@@ -114,6 +114,7 @@ void readCommonInput()
 
 void loadPrefs()
 {
+    memset(&prefs, 0, sizeof(prefs));
     if (read_appkey(AK_CREATOR_ID, AK_APP_ID, AK_KEY_PREFS, tempBuffer))
     {
         memcpy(&prefs, tempBuffer, sizeof(prefs));

@@ -50,6 +50,7 @@ void main(void)
     // toneFinder();
     // printf("Press keys\n");while(1) {while (!kbhit());failedApiCalls = cgetc();printf("%d 0x%x\n", failedApiCalls, failedApiCalls);} // Read Key
 
+    loadPrefs();
     initGraphics();
     initSound();
 

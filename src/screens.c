@@ -161,9 +161,6 @@ void welcomeActionVerifyPlayerName()
 /// @brief Shows the Welcome Screen with Logo. Asks player's name
 void showWelcomeScreen()
 {
-    // Load preferences
-    loadPrefs();
-
     // Retrieve the main player's name
     welcomeActionVerifyPlayerName();
 
@@ -288,12 +285,12 @@ void showTableSelectionScreen()
             {
                 drawBlank(LMAR - 2, 9 + tableIndex * 2);
                 break;
-#ifdef COLOR_TOGGLE
             }
             else if (input.key == 'c' || input.key == 'C')
             {
-                prefs.color = cycleNextColor();
+                cycleNextColor();
                 savePrefs();
+#ifdef COLOR_CYCLE_REQUIRES_REDRAW
                 break;
 #endif
             }
@@ -410,12 +407,14 @@ void showInGameMenuScreen()
 
         resetScreen();
         y = HEIGHT / 2 - 3;
-        drawBox(INGAME_MENU_X - 2, y - 2, 19, 7);
-
         drawTextAlt(INGAME_MENU_X, y, "  Q: quit table");
         drawTextAlt(INGAME_MENU_X, y += 2, "  H: how to play");
+        if (prefs.colorMode)
+            drawTextAlt(INGAME_MENU_X, y += 2, "  C: color mode");
+
         drawTextAlt(INGAME_MENU_X, y += 2, prefs.disableSound ? "  S: sound OFF" : "  S: sound ON");
-        // drawTextAlt(INGAME_MENU_X, y += 2, "  C: keep playing");
+
+        drawBox(INGAME_MENU_X - 2, HEIGHT / 2 - 5, 19, y - (HEIGHT / 2 - 5) + 1);
 
         centerTextAlt(HEIGHT - 1, "press TRIGGER/SPACE to close");
 
@@ -436,19 +435,19 @@ void showInGameMenuScreen()
             case 's':
             case 'S':
                 prefs.disableSound = !prefs.disableSound;
-                drawTextAlt(INGAME_MENU_X, y - 2, prefs.disableSound ? "  S: sound OFF" : "  S: sound ON ");
+                drawTextAlt(INGAME_MENU_X, y, prefs.disableSound ? "  S: sound OFF" : "  S: sound ON ");
                 soundSelect();
                 savePrefs();
                 break;
-#ifdef COLOR_CYCLE
             case 'c':
             case 'C':
-                prefs.color = cycleNextColor();
-                state.drawBoard = true;
+                cycleNextColor();
                 savePrefs();
+#ifdef COLOR_CYCLE_REQUIRES_REDRAW
                 i = 2;
-                break;
 #endif
+                break;
+
             case 'h':
             case 'H':
                 showHelpScreen();
