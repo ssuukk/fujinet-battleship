@@ -7,7 +7,7 @@
 #################################################################
 
 PRODUCT = fbs
-PLATFORMS = coco
+PLATFORMS = coco msdos
 #PLATFORMS = coco apple2 atari c64 adam msdos msxrom # TODO
 
 # Run 'make <platform>' to build for a specific platform,

@@ -48,3 +48,4 @@ void initGraphics();
 void resetGraphics();
 void waitvsync();
 #endif /* GRAPHICS_H */
+

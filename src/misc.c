@@ -1,4 +1,4 @@
-#include <joystick.h>
+#include "include/joystick.h"
 #include <string.h>
 #include "platform-specific/graphics.h"
 #include "platform-specific/input.h"
@@ -8,6 +8,10 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifdef __WATCOMC__
+#define cgetc getch
+#endif
 
 InputStruct input;
 uint8_t _lastJoy, _joy, _joySameCount = 10;
