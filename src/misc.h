@@ -44,6 +44,9 @@
 #define FIELD_ATTACK 1
 #define FIELD_MISS 2
 
+#define LEGEND_SHIP_DESTROYED 0
+#define LEGEND_SHIP_INTACT 1
+
 typedef struct
 {
     char table[9];

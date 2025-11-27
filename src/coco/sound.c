@@ -50,18 +50,6 @@ void soundJoinGame()
     tone(40, 1, 0);
 }
 
-void soundFujitzee()
-{
-    tone(0, 1, 20);
-    tone(70, 1, 20);
-    tone(110, 1, 20);
-
-    tone(132, 2, 50);
-
-    tone(110, 1, 20);
-    tone(132, 3, 0);
-}
-
 void soundMyTurn()
 {
     setTimer(0);

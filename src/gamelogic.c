@@ -314,31 +314,10 @@ void renderGameboard()
 
     if (clientState.game.status >= STATUS_GAMESTART)
     {
-        if (clientState.game.lastAttackPos == state.prevAttackPos || clientState.game.status == STATUS_GAMESTART)
+        if (clientState.game.activePlayer == state.prevActivePlayer || clientState.game.status == STATUS_GAMESTART)
         {
             skipAnim = true;
         }
-        // else if (state.prevActivePlayer != 0)
-        // {
-        //     for (j = 10; j < 255; --j)
-        //     {
-        //     x = clientState.game.lastAttackPos % 10;
-        //     y = clientState.game.lastAttackPos / 10;
-        //     memset(tempBuffer, 0, sizeof(tempBuffer));
-        //     // Draw enemy cursor
-        //     for (i = 1; i < clientState.game.playerCount; i++)
-        //     {
-        //         if (i == clientState.game.activePlayer)
-        //             continue;
-        //         drawGamefieldCursor(i, x, y, tempBuffer, 1);
-        //     }
-        //     // if (j == 10)
-        //     soundCursor();
-        //     pause(30);
-        //     else
-        //       pause(4);
-        //     }
-        // }
 
         playedSound = skipAnim;
 
@@ -398,27 +377,35 @@ void renderGameboard()
             memcpy(state.shipsLeft[i], clientState.game.players[i].shipsLeft, 5);
         }
 
-        for (i = 0; i < clientState.game.playerCount; i++)
+        if (clientState.game.status != STATUS_GAMEOVER || redraw || clientState.game.status != state.prevStatus)
         {
-            // Draw player name
-            drawPlayerName(i, i == 0 && clientState.game.playerStatus != PLAYER_STATUS_VIEWING ? "you" : (const char *)clientState.game.players[i].name, i == clientState.game.activePlayer);
-        }
+            for (i = 0; i < clientState.game.playerCount; i++)
+            {
+                // Draw player name
+                drawPlayerName(i, i == 0 && clientState.game.playerStatus != PLAYER_STATUS_VIEWING ? "you" : (const char *)clientState.game.players[i].name, i == clientState.game.activePlayer);
+            }
 
-        // Blink active player
-        if (clientState.game.activePlayer > 0)
-        {
-            pause(15);
-            drawPlayerName(clientState.game.activePlayer, clientState.game.players[clientState.game.activePlayer].name, false);
+            // Blink active player
+            if (clientState.game.activePlayer > 0)
+            {
+                pause(15);
+                drawPlayerName(clientState.game.activePlayer, clientState.game.players[clientState.game.activePlayer].name, false);
 
-            pause(15);
-            drawPlayerName(clientState.game.activePlayer, clientState.game.players[clientState.game.activePlayer].name, true);
-            pause(15);
+                pause(15);
+                drawPlayerName(clientState.game.activePlayer, clientState.game.players[clientState.game.activePlayer].name, true);
+                pause(15);
+            }
         }
     }
 
-    if (clientState.game.status == STATUS_GAMEOVER)
+    // Display the gameover message and play a sound if the state just changed
+    if (clientState.game.status == STATUS_GAMEOVER && (redraw || clientState.game.status != state.prevStatus))
     {
-        centerTextWide(HEIGHT - 1, clientState.game.prompt);
+        drawEndgameMessage(clientState.game.prompt);
+        if (clientState.game.status != state.prevStatus)
+        {
+            soundGameDone();
+        }
     }
 
     // Draw ships that have been placed already
@@ -623,7 +610,6 @@ uint8_t prevCursorPos;
 // Invalidate state variables that will trigger re-rendering of screen items on the next cycle
 void clearRenderState()
 {
-    state.prevActivePlayer = state.prevStatus = STATE_INVALID;
     state.prevPlayerCount = 0;
     state.drawBoard = true;
 }
