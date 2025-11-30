@@ -26,10 +26,10 @@
 #define STATUS_LOBBY 0
 #define STATUS_PLACE_SHIPS 1
 #define STATUS_GAMESTART 10
-#define STATUS_MISS 11
-#define STATUS_HIT 12
-#define STATUS_SUNK 13
-#define STATUS_GAMEOVER 99
+#define STATUS_MISS 11     // Attack did not hit any ships
+#define STATUS_HIT 12      // A ship was hit
+#define STATUS_SUNK 13     // Also implies a ship was hit
+#define STATUS_GAMEOVER 99 // Also implies a ship was hit
 
 // Set at start to force full redraw
 #define STATE_INVALID 200
@@ -43,6 +43,9 @@
 
 #define FIELD_ATTACK 1
 #define FIELD_MISS 2
+
+#define LEGEND_SHIP_DESTROYED 0
+#define LEGEND_SHIP_INTACT 1
 
 typedef struct
 {

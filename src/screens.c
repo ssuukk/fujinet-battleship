@@ -324,7 +324,7 @@ void showTableSelectionScreen()
 
                 // Visually unselect old table
                 table = &clientState.tables.table[tableIndex];
-                j = table->name[0]; // Reference table so cmoc 0.1.96 optimizer does not corrupt it
+                j = table->name[0]; // Reference table so cmoc 0.1.96 optimizer does not corrupt memory
                 j = 9 + tableIndex * 2;
 
                 drawBlank(LMAR - 2, j);
@@ -337,7 +337,7 @@ void showTableSelectionScreen()
                 // Visually select new table
 
                 table = &clientState.tables.table[tableIndex];
-                j = table->name[0]; // Reference table so cmoc 0.1.96 optimizer does not corrupt it
+                j = table->name[0]; // Reference table so cmoc 0.1.96 optimizer does not corrupt memory
                 j = 9 + tableIndex * 2;
 
                 drawIcon(LMAR - 2, j, ICON_MARK);
@@ -412,7 +412,7 @@ void showInGameMenuScreen()
 
         resetScreen();
         y = HEIGHT / 2 - 3;
-        drawTextAlt(INGAME_MENU_X, y, "  Q: quit table");
+        drawTextAlt(INGAME_MENU_X, y, "  Q: quit game");
         drawTextAlt(INGAME_MENU_X, y += 2, "  H: how to play");
         if (prefs.colorMode)
             drawTextAlt(INGAME_MENU_X, y += 2, "  C: color mode");

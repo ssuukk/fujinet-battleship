@@ -33,8 +33,6 @@ void drawShipInternal(uint8_t *dest, uint8_t size, uint8_t delta);
 extern char lastKey;
 extern uint8_t background;
 static uint8_t fieldX = 0;
-int8_t highlightX = -1;
-bool inBorderScreen = false;
 uint8_t box_color = 0xff;
 uint16_t quadrant_offset[] = {
     256U * 12 + 5 + 64,
@@ -42,6 +40,22 @@ uint16_t quadrant_offset[] = {
     256U * 1 + 17 + 64,
     256U * 12 + 17 + 64};
 
+/* Screen memory offset from the top/left of the tray of where to draw each ship:
+
+0-4 below represent the starting offset of each ship, with # indicating the rest of the ship characters
+
+       0 1 2 offset
+     . . . . .
+   0 . 2 1 0 .
+ 256 . # # # .
+ 512 . # # # .
+ 768 .   # # .
+     .     # .
+     . 3     .
+     . # 4   .
+     . # #   .
+     . . . . .
+*/
 uint16_t legendShipOffset[] = {2, 1, 0, 256U * 5, 256U * 6 + 1};
 
 void updateColors()
@@ -119,6 +133,20 @@ bool saveScreenBuffer()
 void restoreScreenBuffer()
 {
     // No-op on CoCo
+}
+
+void drawEndgameMessage(const char *message)
+{
+    uint8_t i, x;
+    i = (uint8_t)strlen(message);
+    x = (WIDTH - i) / 2;
+
+    hires_Mask(0, HEIGHT * 8 - 10, 32, 1, ROP_BLUE);
+    hires_Mask(0, HEIGHT * 8 - 9, 32, 9, ROP_YELLOW);
+
+    background = ROP_YELLOW;
+    drawTextAt(x, HEIGHT * 8 - 9, message);
+    background = 0;
 }
 
 void drawPlayerName(uint8_t player, const char *name, bool active)
@@ -250,6 +278,7 @@ uint8_t *srcHit = &charset[(uint16_t)0x19 << 3];
 uint8_t *srcMiss = &charset[(uint16_t)0x1A << 3];
 uint8_t *srcHit2 = &charset[(uint16_t)0x1B << 3];
 uint8_t *srcHitLegend = &charset[(uint16_t)0x1C << 3];
+uint8_t *srcAttackAnimStart = &charset[(uint16_t)0x63 << 3];
 
 // Updates the gamefield display at attackPos
 void drawGamefieldUpdate(uint8_t quadrant, uint8_t *gamefield, uint8_t attackPos, uint8_t blink)
@@ -257,19 +286,29 @@ void drawGamefieldUpdate(uint8_t quadrant, uint8_t *gamefield, uint8_t attackPos
     uint8_t *src, *dest = (uint8_t *)SCREEN + quadrant_offset[quadrant] + fieldX + (uint16_t)(attackPos / 10) * 256 + (attackPos % 10);
     uint8_t j, c = gamefield[attackPos];
 
-    if (c == FIELD_ATTACK)
+    // Animate attack (checking for empty sea cells if animating attack for active player)
+    if (blink > 9 && (clientState.game.activePlayer > 0 || c == 0))
     {
-        src = blink ? srcHit2 : srcHit;
-    }
-    else if (c == FIELD_MISS)
-    {
-        src = srcMiss;
+        src = srcAttackAnimStart + (blink - 10) * 8;
     }
     else
     {
-        return;
+
+        if (c == FIELD_ATTACK)
+        {
+            src = blink ? srcHit2 : srcHit;
+        }
+        else if (c == FIELD_MISS)
+        {
+            src = srcMiss;
+        }
+        else
+        {
+            return;
+        }
     }
 
+    // Draw the updated cell
     for (j = 0; j < 8; ++j)
     {
         *dest = *src++;
@@ -336,6 +375,7 @@ void drawShipInternal(uint8_t *dest, uint8_t size, uint8_t delta)
         }
     }
 }
+
 void drawShip(uint8_t size, uint8_t pos, bool hide)
 {
     uint8_t x, y, i, j, delta = 0;
@@ -539,9 +579,7 @@ void resetGraphics()
 
 void waitvsync()
 {
-    uint16_t i = getTimer();
-    while (i == getTimer())
-        ;
+    asm { sync}
 }
 
 void drawBlank(uint8_t x, uint8_t y)
