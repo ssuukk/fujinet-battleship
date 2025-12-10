@@ -52,7 +52,7 @@
 #define KEY_ESCAPE_ALT 0x1B
 
 #define KEY_SPACEBAR 0x20
-#define KEY_BACKSPACE 0x7F
+#define KEY_BACKSPACE 0x08
 
 #define CHAR_CURSOR 0x9F
 
