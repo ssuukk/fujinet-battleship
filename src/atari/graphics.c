@@ -200,6 +200,9 @@ void resetScreen()
         // Restore normal charset
         memcpy((void *)CHARSET_LOC, &charset, 1024);
         inGameCharSet = false;
+
+        // Clear any cursors
+        memset(PM_BASE + 1024, 0, 768);
     }
 }
 
@@ -545,19 +548,17 @@ void drawGamefieldUpdate(uint8_t quadrant, uint8_t *gamefield, uint8_t attackPos
 }
 void drawGamefieldCursor(uint8_t quadrant, uint8_t x, uint8_t y, uint8_t *gamefield, uint8_t blink)
 {
-    uint16_t pos = quadrant_offset[quadrant] + y * WIDTH + fieldX + x, dest = PM_BASE + 768 + 24;
+    uint16_t pos = quadrant_offset[quadrant] + y * WIDTH + fieldX + x;
+    uint16_t lc = lastCursor[quadrant];
 
-    dest += quadrant * 256U;
+    lastCursor[quadrant] = PM_BASE + 768 + 24 + quadrant * 256 + (pos / WIDTH) * 8;
 
-    memset(lastCursor[quadrant], 0, 8);
-
-    if (blink)
-    {
-        memcpy(lastCursor[quadrant] = dest + (pos / WIDTH) * 8, &cursor_pmg, 8);
-    }
+    memset(lc, 0, 8);
+    memcpy(lastCursor[quadrant], &cursor_pmg, 8);
 
     POKE(0xd000 - 1 + quadrant, (pos % WIDTH) * 4 + 48); // horiz loc
     cursorVisible = true;
+
     (void)gamefield;
 }
 
