@@ -125,48 +125,6 @@ void playToneVoice(uint8_t voiceIndex, uint16_t frequency, uint8_t duration, uin
     POKE(base + 4, waveform & ~GATE_ON);
 }
 
-// Arguments:
-// - frequency: Hz value (will be converted to SID Fn internally)
-// - duration: milliseconds to play the tone
-// - waveform: control bits (WAVEFORM_TRIANGLE, WAVEFORM_SAWTOOTH, WAVEFORM_PULSE, WAVEFORM_NOISE)
-// - pulseWidth: 12-bit pulse width (0x0000..0x0FFF; only used if WAVEFORM_PULSE selected)
-// - attack_decay: SID ADSR register value (attack in bits 4-7, decay in bits 0-3)
-// - sustain_release: SID ADSR register value (sustain in bits 4-7, release in bits 0-3)
-// This function is BLOCKING: it plays the tone for the specified duration then returns.
-void playToneFull(uint16_t frequency, uint8_t duration, uint8_t waveform, uint16_t pulseWidth, uint8_t attack_decay, uint8_t sustain_release)
-{
-    uint16_t sidfn;
-    uint16_t pw12;
-    
-    // Convert frequency from Hz to SID 16-bit Fn
-    sidfn = hz_to_sidfn(frequency);
-    
-    // Write SID voice 1 registers (base = 0xD400)
-    POKE(SID_FREQ_LO, sidfn & 0xFF);
-    POKE(SID_FREQ_HI, sidfn >> 8);
-    
-    // Clamp and write pulse width (12-bit)
-    pw12 = pulseWidth & 0x0FFF;
-    POKE(SID_PW_LO, pw12 & 0xFF);
-    POKE(SID_PW_HI, (pw12 >> 8) & 0x0F);
-    
-    // Write ADSR envelope parameters
-    POKE(SID_ATTACK_DECAY, attack_decay);
-    POKE(SID_SUSTAIN_RELEASE, sustain_release);
-    
-    // Set waveform and gate on to trigger the envelope
-    POKE(SID_CONTROL, waveform | GATE_ON);
-    
-    // Wait for the specified duration
-    wait_ms(duration);
-    
-    // Clear gate bit to begin release phase
-    POKE(SID_CONTROL, waveform & ~GATE_ON);
-}
-
-// This is a battleship game, please try to keep the sounds appropriate
-// They should sound modern, but fit within the limitations of the SID chip
-
 // Stop any playing sound (clears all voice gates)
 void soundStop()
 {
