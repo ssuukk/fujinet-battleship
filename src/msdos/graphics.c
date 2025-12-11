@@ -51,10 +51,10 @@ unsigned char prevVideoMode;
  */
 static unsigned char quadrant_offset[4][2] =
     {
-        {8,14}, // bottom left
-        {8,2},  // Top left
-        {21,2}, // top right
-        {21,14} // bottom right
+        {8,13}, // bottom left
+        {8,1},  // Top left
+        {21,1}, // top right
+        {21,13} // bottom right
     };
 
 
@@ -160,7 +160,7 @@ void plot_char(unsigned char x,
 
     for (i=0;i<sizeof(tile);i++)
     {
-        tile[i] = ascii[c][i] & mask ^ xor;
+        tile[i] = ascii[c][i] ^ xor & mask;
     }
 
     plot_tile(&tile[0], x, y);
@@ -204,6 +204,20 @@ unsigned char cycleNextColor()
 }
 
 /**
+ * @brief Is PCjr?
+ * @return true = yes, false = no.
+ */
+bool isPCjr(void)
+{
+    union REGS r;
+
+    r.h.ah = 0xC0;
+    int86(0x15,&r,&r);
+
+    return (r.h.al == 0xFD); // 0xFD = PCjr
+}
+
+/**
  * @brief Initialize Graphics mode
  * @verbose 320x200x2bpp (4 colors, CGA)
  */
@@ -219,7 +233,12 @@ void initGraphics()
 
     // Set graphics mode
     r.h.ah = 0x00;
-    r.h.al = 0x04; // 320x200x4
+
+    if (isPCjr())
+        r.h.al = 0x04; // Choose color
+    else
+        r.h.al = 0x05; // choose "b&w" for alternate palette
+
     int86(0x10,&r,&r);
 
     // Set Background Color
@@ -227,6 +246,12 @@ void initGraphics()
     r.h.bh = 0x00;
     r.h.bl = 0x01; // Blue
     int86(0x10,&r,&r);
+
+    if (!isPCjr())
+    {
+        // Set intensity bit for standard CGA card.
+        outp(0x3D9,0x31);
+    }
 
     // remap palette
     r.h.ah = 0x10;
@@ -400,12 +425,13 @@ void drawConnectionIcon(bool show)
  */
 void drawPlayerName(unsigned char player, const char *name, bool active)
 {
-    uint8_t x   = quadrant_offset[player][0];
-    uint8_t y   = quadrant_offset[player][1];
+    uint8_t x   = quadrant_offset[player][0]-1;
+    uint8_t y   = quadrant_offset[player][1]-1;
     uint8_t add = active ? 0x00 : 0x80;
     uint8_t i   = 0;
 
     x += fieldX;
+    add=0;
 
     if (player == 0 || player == 3)
     {
@@ -438,7 +464,7 @@ void drawPlayerName(unsigned char player, const char *name, bool active)
         drawIcon(x+9,y+11, 0x60 + add);
         drawIcon(x+10,y+11, 0x60 + add);
         drawIcon(x+11,y+11, 0x5F + add);
-        plotName(x+1,y+11, active ? 1 : 2, name);
+        plotName(x+2,y+11, active ? 2 : 2, name);
 
         // Active indicator
         if (active)
@@ -456,6 +482,7 @@ void drawPlayerName(unsigned char player, const char *name, bool active)
         drawIcon(x+8,y+12,0x28 + add);
         drawIcon(x+9,y+12,0x28 + add);
         drawIcon(x+10,y+12,0x28 + add);
+        drawIcon(x+11,y+12,0x21 + add);
     }
     else
     {
@@ -487,7 +514,8 @@ void drawPlayerName(unsigned char player, const char *name, bool active)
         drawIcon(x+8, y, 0x60 + add);
         drawIcon(x+9, y, 0x60 + add);
         drawIcon(x+10, y, 0x60 + add);
-        plotName(x+1, y, active ? 1 : 2, name);
+        drawIcon(x+11, y, 0x5D + add);
+        plotName(x+2, y, active ? 2 : 2, name); // set back to 1
 
         // Active indicator
         if (active)
@@ -529,11 +557,11 @@ void drawPlayerName(unsigned char player, const char *name, bool active)
         }
 
         // bottom
-        drawIcon(x, y+10, 0x22 + add);
-        drawIcon(x+1,y+10, 0x31 + add);
-        drawIcon(x+2,y+10, 0x31 + add);
-        drawIcon(x+3,y+10, 0x31 + add);
-        drawIcon(x+11, y+10, 0x25 + add);
+        drawIcon(x,y+10,0x22 + add);
+        drawIcon(x+11,y+10, 0x25 + add);
+        drawIcon(x+12,y+10, 0x31 + add);
+        drawIcon(x+13,y+10, 0x31 + add);
+        drawIcon(x+14, y+10, 0x31 + add);
         drawIcon(x+15, y+10, 0x2F + add); // Left edge
     }
     else
@@ -551,7 +579,7 @@ void drawPlayerName(unsigned char player, const char *name, bool active)
         {
             drawIcon(x-4, y+2+i, 0x02 + add);
             drawIcon(x, y+2+i, 0x02 + add);
-            drawIcon(x+11, y+2+i, 0x22 + add);
+            drawIcon(x+11, y+2+i, 0x23 + add);
         }
 
         drawIcon(x-4,y+10,0x2E+add);
@@ -611,7 +639,7 @@ void drawShipInternal(unsigned char x, unsigned char y, unsigned char size, unsi
         backing_store[x][y] = c;
         drawIcon(x, y++, c--); // top
 
-        while (size>1) // middle
+        while (size>2) // middle
         {
             backing_store[x][y] = c;
             drawIcon(x, y++, c);
@@ -627,7 +655,7 @@ void drawShipInternal(unsigned char x, unsigned char y, unsigned char size, unsi
         // Horizontal
         drawIcon(x++, y, c++); // Left
 
-        while (size>1) // middle
+        while (size>2) // middle
         {
             backing_store[x][y] = c;
             drawIcon(x++, y, c);
